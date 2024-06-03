@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jewelry App</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        /* Center all contents */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Style for header */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Style for logo */
+        .logo {
+            width: 200px; /* Adjust size as needed */
+            margin-bottom: 20px;
+        }
+
+        /* Style for navigation buttons */
+        .nav-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Style for navigation button */
+        .nav-button {
+            margin: 0 10px; /* Adjust spacing between buttons */
+        }
+
+        /* Style for camera box */
+        .camera-box {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Adjust maximum width as needed */
+            margin: 0 auto; /* Center horizontally */
+            opacity: 0; /* Initially hidden */
+            transition: opacity 0.5s ease-in-out; /* Fade in/out animation */
+        }
+
+        /* Style for video feed */
+        #video-feed {
+            width: 100%;
+            height: auto;
+        }
+
+        /* Show camera box when clicked */
+        .show-camera {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="{% static 'images/logo.png' %}" alt="Kalpan Infonomics" class="logo animate__animated animate__fadeInDown">
+        </div>
+
+        <!-- Content box for the camera feed -->
+        <div id="camera-box" class="camera-box">
+            <video id="video-feed" autoplay></video>
+        </div>
+
+        <div class="nav-buttons animate__animated animate__fadeInUp">
+            <button class="nav-button" onclick="window.location.href='{% url 'handestimation:index' %}'">Rings</button>
+            <button class="nav-button" onclick="window.location.href='{% url 'necklace_overlay:index' %}'">Necklaces</button>
+            <button class="nav-button" onclick="window.location.href='{% url 'earring_overlay:index' %}'">Earrings</button>
+        </div>
+    </div>
+
+    <script>
+        // Function to start the camera feed
+        function startCamera() {
+            const videoFeed = document.getElementById('video-feed');
+            navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                videoFeed.srcObject = stream;
+            })
+            .catch(function(err) {
+                console.log("An error occurred: " + err);
+            });
+        }
+
+        // Function to stop the camera feed
+        function stopCamera() {
+            const videoFeed = document.getElementById('video-feed');
+            const stream = videoFeed.srcObject;
+            const tracks = stream.getTracks();
+
+            tracks.forEach(function(track) {
+                track.stop();
+            });
+
+            videoFeed.srcObject = null;
+        }
+
+        // Start the camera feed when the content box is clicked
+        document.getElementById('camera-box').addEventListener('click', function() {
+            startCamera();
+            setTimeout(function() {
+                stopCamera();
+            }, 20000); // Stop the camera after 20 seconds of inactivity
+        });
+
+        // Toggle camera box visibility
+        document.getElementById('camera-box').addEventListener('click', function() {
+            this.classList.toggle('show-camera');
+        });
+    </script>
+</body>
+</html>
