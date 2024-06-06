@@ -1,58 +1,103 @@
-from django.http import StreamingHttpResponse, JsonResponse
+import os
 from django.shortcuts import render
-from django.core.mail import EmailMessage
-from django.conf import settings
 import cv2
 import mediapipe as mp
+import cvzone
+from google.protobuf.json_format import MessageToDict
+from django.http import StreamingHttpResponse, JsonResponse
+from django.core.mail import EmailMessage
+from django.conf import settings
+from django.templatetags.static import static
 import logging
-import os
-from io import BytesIO
-from django.core.files.base import ContentFile
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-
-# Mediapipe hands setup
 mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5, min_tracking_confidence=0.5)
 mp_drawing = mp.solutions.drawing_utils
 
-# Global variable to store the last frame
 last_frame = None
+selected_ring = None
 
-def handpose_video_feed():
-    global last_frame
+def handpose_video_feed(request):
+    global last_frame, selected_ring
+    if request.method == 'POST':
+        selected_ring = request.POST.get('ring')
     cap = cv2.VideoCapture(0)
+    hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5,
+                           min_tracking_confidence=0.5)
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+    try:
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-        # Processing the frame
-        frame = cv2.flip(frame, 1)
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        results = hands.process(frame_rgb)
+            frame = cv2.flip(frame, 1)
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = hands.process(frame_rgb)
 
-        # Add your processing logic here (for overlaying rings, etc.)
-        if results.multi_hand_landmarks is not None:
-            for hand_landmarks in results.multi_hand_landmarks:
-                mp_drawing.draw_landmarks(frame_rgb, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            if results.multi_hand_landmarks:
+                for hand in results.multi_handedness:
+                    label = MessageToDict(hand)['classification'][0]['label']
+                    for hand_landmarks in results.multi_hand_landmarks:
+                        if hand_landmarks.landmark:
+                            ring_finger_pip = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_PIP]
+                            ring_finger_mcp = hand_landmarks.landmark[mp_hands.HandLandmark.RING_FINGER_MCP]
+                            middle_finger_pip = hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_FINGER_PIP]
 
-        frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
-        ret, buffer = cv2.imencode('.jpg', frame_bgr)
-        frame = buffer.tobytes()
-        last_frame = frame_bgr  # Update the global variable with the last processed frame
-        logging.debug("Updated last_frame")
+                            h, w, _ = frame_rgb.shape
+                            ring_finger_pip_x = int(ring_finger_pip.x * w)
+                            ring_finger_pip_y = int(ring_finger_pip.y * h)
+                            ring_finger_mcp_x = int(ring_finger_mcp.x * w)
+                            ring_finger_mcp_y = int(ring_finger_mcp.y * h)
+                            middle_finger_pip_x = int(middle_finger_pip.x * w)
+                            middle_finger_pip_y = int(middle_finger_pip.y * h)
 
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                            distance = ((ring_finger_pip_x - ring_finger_mcp_x) ** 2 + (
+                                        ring_finger_pip_y - ring_finger_mcp_y) ** 2) ** 0.45
+                            scaling_factor = int(distance)
 
-    cap.release()
-    hands.close()
+                            if label == 'Left' and ring_finger_pip_x > middle_finger_pip_x:
+                                average_x = (ring_finger_mcp_x + ring_finger_pip_x) // 2
+                                average_y = (int(ring_finger_mcp_y) + ring_finger_pip_y) // 2
+
+                                overlay_image = cv2.imread(os.path.join(settings.STATIC_ROOT, 'rings', selected_ring),
+                                                           cv2.IMREAD_UNCHANGED)
+                                overlay_image = cv2.resize(overlay_image, (scaling_factor, scaling_factor))
+                                frame_rgb = cvzone.overlayPNG(frame_rgb, overlay_image,
+                                                              [average_x - scaling_factor // 2,
+                                                               average_y - scaling_factor // 2])
+                            elif label == 'Right' and ring_finger_pip_x < middle_finger_pip_x:
+                                average_x = (ring_finger_mcp_x + ring_finger_pip_x) // 2
+                                average_y = (int(ring_finger_mcp_y) + ring_finger_pip_y) // 2
+
+                                overlay_image = cv2.imread(os.path.join(settings.BASE_DIR,'handestimation','static', 'rings', selected_ring),
+                                                           cv2.IMREAD_UNCHANGED)
+                                overlay_image = cv2.resize(overlay_image, (scaling_factor, scaling_factor))
+                                frame_rgb = cvzone.overlayPNG(frame_rgb, overlay_image,
+                                                              [average_x - scaling_factor // 2, average_y - scaling_factor // 2])
+                            else:
+                                cv2.putText(frame_rgb, "Please show backside of your hand", (50, 50),
+                                            cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0))
+                        else:
+                            cv2.putText(frame_rgb, "Please show your hands (No Hands Detected)", (50, 50),
+                                        cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0))
+
+            frame_bgr = cv2.cvtColor(frame_rgb, cv2.COLOR_RGB2BGR)
+            ret, buffer = cv2.imencode('.jpg', frame_bgr)
+            frame = buffer.tobytes()
+            last_frame = frame_bgr
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+    finally:
+        cap.release()
+        hands.close()
 
 def capture_frame_and_send_email(request):
-    global last_frame  # Ensure we use the global last_frame variable
+    global last_frame, selected_ring  # Ensure we use the global last_frame variable
+    if request.method == 'POST':
+        email_address = request.POST.get('email')
+        if not email_address:
+            return JsonResponse({'status': 'error', 'message': 'Email Address is required'})
     if last_frame is not None:
         # Convert the frame to bytes
         _, buffer = cv2.imencode('.jpg', last_frame)
@@ -63,7 +108,7 @@ def capture_frame_and_send_email(request):
             'Captured Frame',
             'Please find the attached frame captured from the jewelry app.',
             settings.DEFAULT_FROM_EMAIL,
-            ['recipient@example.com'],
+            [email_address],
         )
 
         email.attach('captured_frame.jpg', frame_bytes, 'image/jpeg')
@@ -76,7 +121,12 @@ def capture_frame_and_send_email(request):
         return JsonResponse({'status': 'error', 'message': 'No frame available'})
 
 def video_feed(request):
-    return StreamingHttpResponse(handpose_video_feed(), content_type='multipart/x-mixed-replace; boundary=frame')
+    return StreamingHttpResponse(handpose_video_feed(request), content_type='multipart/x-mixed-replace; boundary=frame')
 
 def index(request):
-    return render(request, 'handestimation/index.html')
+    rings_dir = os.path.join(settings.BASE_DIR, 'handestimation','static', 'rings')
+    if not os.path.exists(rings_dir):
+        raise FileNotFoundError(f"The system cannot find the path specified: {rings_dir}")
+    rings = [f for f in os.listdir(rings_dir) if os.path.isfile(os.path.join(rings_dir, f))]
+    return render(request, 'handestimation/index.html', {'rings': rings})
+

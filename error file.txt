@@ -1,0 +1,48 @@
+An error occurred while selecting the ring.
+the error prompt is intialized while selecting the ring
+
+Console error:
+POST http://127.0.0.1:8000/handestimation/handpose_video_feed/ 500 (Internal Server Error)
+send @ jquery-3.6.0.min.js:2
+ajax @ jquery-3.6.0.min.js:2
+selectRing @ handestimation/:100
+(anonymous) @ handestimation/:95Understand this error
+handestimation/:111 Error: {readyState: 4, getResponseHeader: ƒ, getAllResponseHeaders: ƒ, setRequestHeader: ƒ, overrideMimeType: ƒ, …}
+error @ handestimation/:111
+c @ jquery-3.6.0.min.js:2
+fireWith @ jquery-3.6.0.min.js:2
+l @ jquery-3.6.0.min.js:2
+(anonymous) @ jquery-3.6.0.min.js:2
+load (async)
+send @ jquery-3.6.0.min.js:2
+ajax @ jquery-3.6.0.min.js:2
+selectRing @ handestimation/:100
+(anonymous) @ handestimation/:95Understand this error
+
+Terminal error:
+[06/Jun/2024 19:36:59] "GET /handestimation/ HTTP/1.1" 200 4585
+Internal Server Error: /handestimation/handpose_video_feed/
+Traceback (most recent call last):
+ File "C:\Users\harsh\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\core\handlers\exception.py", line 55, in inner
+  response = get_response(request)
+        ^^^^^^^^^^^^^^^^^^^^^
+ File "C:\Users\harsh\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\core\handlers\base.py", line 204, in _get_response
+  self.check_response(response, callback)
+ File "C:\Users\harsh\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\core\handlers\base.py", line 337, in check_response
+  raise ValueError(
+ValueError: The view handestimation.views.handpose_video_feed didn't return an HttpResponse object. It returned an unawaited coroutine instead. You may need to add an 'await' into 
+your view.
+[06/Jun/2024 19:37:04] "POST /handestimation/handpose_video_feed/ HTTP/1.1" 500 65930
+Traceback (most recent call last):
+ File "C:\Users\harsh\AppData\Local\Programs\Python\Python311\Lib\wsgiref\handlers.py", line 138, in run
+  self.finish_response()
+ File "C:\Users\harsh\AppData\Local\Programs\Python\Python311\Lib\site-packages\django\core\servers\basehttp.py", line 173, in finish_response
+  super().finish_response()
+ File "C:\Users\harsh\AppData\Local\Programs\Python\Python311\Lib\wsgiref\handlers.py", line 183, in finish_response
+  for data in self.result:
+ File "D:\Internship\jewelery_app\jewelery_app\handestimation\views.py", line 72, in handpose_video_feed
+  overlay_image = cv2.imread(os.path.join(settings.BASE_DIR,'handestimation','static', 'rings', selected_ring),
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ File "<frozen ntpath>", line 147, in join
+ File "<frozen genericpath>", line 152, in _check_arg_types
+TypeError: join() argument must be str, bytes, or os.PathLike object, not 'NoneType'
