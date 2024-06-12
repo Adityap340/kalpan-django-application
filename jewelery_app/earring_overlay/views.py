@@ -7,25 +7,38 @@ from imutils import face_utils
 from django.core.mail import EmailMessage
 from django.conf import settings
 import logging
+import os
+BASE_DIR = settings.BASE_DIR
 
 last_frame = None
 
-p = "D:\\Internship\\jewelery_app\\assests\\shape_predictor_68_face_landmarks.dat"
+earrings_array = []
+for a,b,c in os.walk(os.path.join(BASE_DIR,"earring_overlay","static","earrings",)):
+    earrings_array = c
+
+context = {
+    "data":earrings_array,
+}
+
+selected_earring = 'ring1_single.png'
+
+p = os.path.join('assests','shape_predictor_68_face_landmarks.dat')
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor(p)
 
 
 def generate_frames():
     global last_frame
-    earring1 = cv2.imread('D:\\Internship\\jewelery_app\\assests\\ring1_single.png', -1)
-    earring1 = cv2.resize(earring1, (25, 65))
-
     cap = cv2.VideoCapture(0)
+
     try:
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
+
+            earring1 = cv2.imread(os.path.join(BASE_DIR,"earring_overlay","static","earrings",selected_earring),cv2.IMREAD_UNCHANGED)
+            earring1 = cv2.resize(earring1, (25, 65))
 
             gray = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
             rects = detector(gray, 0)
@@ -54,6 +67,13 @@ def generate_frames():
 
     finally:
         cap.release()
+
+def set_selected_earring(request):
+    global selected_earring
+    if request.method == 'POST':
+        selected_earring = request.POST['selected_earring']
+    return JsonResponse({'status': 'success', 'message': 'Image changed successfully'})
+
 
 def capture_frame_and_send_email(request):
     global last_frame  # Ensure we use the global last_frame variable
@@ -89,4 +109,4 @@ def video_feed(request):
 
 
 def index(request):
-    return render(request, 'earring_overlay/index.html')
+    return render(request, 'earring_overlay/index.html',context)

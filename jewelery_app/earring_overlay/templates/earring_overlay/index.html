@@ -25,6 +25,13 @@
             <img src="{% url 'earring_overlay:video_feed' %}" width="720" height="560">
         </div>
         <button class="snap-button" onclick="captureFrame()">Snap</button>
+        <div class="ring-options">
+            {% for earring in data %}
+            <div class="ring-item">
+                <img src="{% static 'earrings/' %}{{ earring }}" onclick="select_earring(event, '{{ earring }}')" alt="{{ earring }}">
+            </div>
+            {% endfor %}
+        </div>
     </div>
     <script>
         function captureFrame() {
@@ -38,6 +45,26 @@
                 url: '{% url 'earring_overlay:capture_frame_and_send_email' %}',
                 data: {
                     'email': email,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(error) {
+                    console.error("Error:", error);
+                    alert("An error occurred while capturing the frame.");
+                }
+            });
+        }
+
+        function select_earring(event, earring) {
+            console.log(earring);
+            var selected_earring = earring;
+            $.ajax({
+                type: 'POST',
+                url: '{% url 'earring_overlay:set_selected_earring' %}',
+                data: {
+                    'selected_earring': selected_earring,
                     'csrfmiddlewaretoken': '{{ csrf_token }}'
                 },
                 success: function(response) {

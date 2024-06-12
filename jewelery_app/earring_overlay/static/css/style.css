@@ -83,3 +83,33 @@ body {
             background-color: #fff;
             margin-bottom: 20 px;
 }
+
+.ring-options {
+    width: 200px; /* Adjust width as needed */
+    padding: 20px;
+    background: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: absolute;
+    right: 20px; /* Adjust positioning as needed */
+    top: 0;
+    height: 100%;
+    overflow-y: auto; /* Scroll if content overflows */
+}
+
+.ring-option {
+    display: inline-block;
+    margin: 10px;
+    cursor: pointer;
+}
+
+.ring-option img {
+    max-width: 50px;
+    max-height: 50px;
+    border: 2px solid transparent;
+}
+
+.ring-option.selected img {
+    border-color: blue;
+}
