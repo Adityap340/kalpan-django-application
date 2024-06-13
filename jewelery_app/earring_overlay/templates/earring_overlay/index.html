@@ -14,7 +14,7 @@
             <img src="{% static 'images/logo.png' %}" alt="Kalpan Infonomics">
         </div>
         <ul class="nav">
-            <li><a href="#">Home</a></li>
+            <li><a href="{% url 'home:home' %}">Home</a></li>
             <li><a href="{% url 'handestimation:index' %}">Rings</a></li>
             <li><a href="{% url 'necklace_overlay:index' %}">Necklaces</a></li>
             <li><a href="{% url 'earring_overlay:index' %}">Earrings</a></li>
