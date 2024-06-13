@@ -25,13 +25,13 @@
             <img src="{% url 'handestimation:video_feed' %}" width="720" height="560">
         </div>
         <button class="snap-button" onclick="captureFrame()">Snap</button>
-        <div class="ring-options">
-            {% for ring in data %}
-            <div class="ring-item">
-                <img src="{% static 'rings/' %}{{ ring }}" onclick="select_ring(event, '{{ ring }}')" alt="{{ ring }}">
-            </div>
-            {% endfor %}
+    </div>
+    <div class="ring-options">
+        {% for ring in data %}
+        <div class="ring-item">
+            <img src="{% static 'rings/' %}{{ ring }}" onclick="select_ring(event, '{{ ring }}')" alt="{{ ring }}">
         </div>
+        {% endfor %}
     </div>
 
     <script>

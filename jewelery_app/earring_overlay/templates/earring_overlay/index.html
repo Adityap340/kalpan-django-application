@@ -25,13 +25,13 @@
             <img src="{% url 'earring_overlay:video_feed' %}" width="720" height="560">
         </div>
         <button class="snap-button" onclick="captureFrame()">Snap</button>
-        <div class="ring-options">
-            {% for earring in data %}
-            <div class="ring-item">
-                <img src="{% static 'earrings/' %}{{ earring }}" onclick="select_earring(event, '{{ earring }}')" alt="{{ earring }}">
-            </div>
-            {% endfor %}
+    </div>
+    <div class="ring-options">
+        {% for earring in data %}
+        <div class="ring-item">
+            <img src="{% static 'earrings/' %}{{ earring }}" onclick="select_earring(event, '{{ earring }}')" alt="{{ earring }}">
         </div>
+        {% endfor %}
     </div>
     <script>
         function captureFrame() {

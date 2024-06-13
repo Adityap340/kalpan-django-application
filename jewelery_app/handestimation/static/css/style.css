@@ -98,21 +98,19 @@ body {
     align-items: center;
     position: absolute;
     right: 20px; /* Adjust positioning as needed */
-    top: 0;
+    top: 50px;
     height: 100%;
     overflow-y: auto; /* Scroll if content overflows */
 }
 
-.ring-option {
+.ring-item {
     display: inline-block;
     margin: 10px;
     cursor: pointer;
 }
 
-.ring-option img {
-    max-width: 50px;
-    max-height: 50px;
-    border: 2px solid transparent;
+.ring-item img {
+    width: 150px;
 }
 
 .ring-option.selected img {

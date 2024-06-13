@@ -9,22 +9,24 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="logo">
-            <img src="{% static 'images/logo.png' %}" alt="Kalpan Infonomics">
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <img src="{% static 'images/logo.png' %}" alt="Kalpan Infonomics">
+            </div>
+            <ul class="nav">
+                <li><a href="#">Home</a></li>
+                <li><a href="{% url 'handestimation:index' %}">Rings</a></li>
+                <li><a href="{% url 'necklace_overlay:index' %}">Necklaces</a></li>
+                <li><a href="{% url 'earring_overlay:index' %}">Earrings</a></li>
+            </ul>
         </div>
-        <ul class="nav">
-            <li><a href="#">Home</a></li>
-            <li><a href="{% url 'handestimation:index' %}">Rings</a></li>
-            <li><a href="{% url 'necklace_overlay:index' %}">Necklaces</a></li>
-            <li><a href="{% url 'earring_overlay:index' %}">Earrings</a></li>
-        </ul>
-    </div>
-    <div class="content">
-        <div class="video-container">
-            <img src="{% url 'necklace_overlay:video_feed' %}" width="720" height="560">
+        <div class="content">
+            <div class="video-container">
+                <img src="{% url 'necklace_overlay:video_feed' %}" width="720" height="560">
+            </div>
+            <button class="snap-button" onclick="captureFrame()">Snap</button>
         </div>
-        <button class="snap-button" onclick="captureFrame()">Snap</button>
         <div class="ring-options">
             {% for necklace in data %}
             <div class="ring-item">
