@@ -8,16 +8,28 @@ from django.core.mail import EmailMessage
 from django.conf import settings
 import logging
 
+import os
+BASE_DIR = settings.BASE_DIR
+
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
-
 last_frame = None
 
-def handpose_video_feed():
+
+rings_array = []
+for a,b,c in os.walk(os.path.join(BASE_DIR,"handestimation","static","rings",)): 
+    rings_array = c
+
+context = {
+    "data":rings_array,
+}
+selected_ring = 'ring1.png'
+def handpose_video_feed():    
+    # if request.method == 'GET':
     global last_frame
     cap = cv2.VideoCapture(0)
     hands = mp_hands.Hands(static_image_mode=False, max_num_hands=2, min_detection_confidence=0.5,
-                           min_tracking_confidence=0.5)
+                        min_tracking_confidence=0.5)
 
     try:
         while cap.isOpened():
@@ -54,21 +66,21 @@ def handpose_video_feed():
                                 average_x = (ring_finger_mcp_x + ring_finger_pip_x) // 2
                                 average_y = (int(ring_finger_mcp_y) + ring_finger_pip_y) // 2
 
-                                overlay_image = cv2.imread("D:\\Internship\\ring_1-removebg-preview.png",
-                                                           cv2.IMREAD_UNCHANGED)
+                                overlay_image = cv2.imread(os.path.join(BASE_DIR,"handestimation","static","rings",selected_ring),
+                                                        cv2.IMREAD_UNCHANGED)
                                 overlay_image = cv2.resize(overlay_image, (scaling_factor, scaling_factor))
                                 frame_rgb = cvzone.overlayPNG(frame_rgb, overlay_image,
-                                                              [average_x - scaling_factor // 2,
-                                                               average_y - scaling_factor // 2])
+                                                            [average_x - scaling_factor // 2,
+                                                            average_y - scaling_factor // 2])
                             elif label == 'Right' and ring_finger_pip_x < middle_finger_pip_x:
                                 average_x = (ring_finger_mcp_x + ring_finger_pip_x) // 2
                                 average_y = (int(ring_finger_mcp_y) + ring_finger_pip_y) // 2
 
-                                overlay_image = cv2.imread("D:\\Internship\\ring_1-removebg-preview.png",
-                                                           cv2.IMREAD_UNCHANGED)
+                                overlay_image = cv2.imread(os.path.join(BASE_DIR,"handestimation","static","rings",selected_ring),
+                                                        cv2.IMREAD_UNCHANGED)
                                 overlay_image = cv2.resize(overlay_image, (scaling_factor, scaling_factor))
                                 frame_rgb = cvzone.overlayPNG(frame_rgb, overlay_image,
-                                                              [average_x - scaling_factor // 2, average_y - scaling_factor // 2])
+                                                            [average_x - scaling_factor // 2, average_y - scaling_factor // 2])
                             else:
                                 cv2.putText(frame_rgb, "Please show backside of your hand", (50, 50),
                                             cv2.FONT_HERSHEY_PLAIN, 2, (255, 0, 0))
@@ -81,12 +93,17 @@ def handpose_video_feed():
             frame = buffer.tobytes()
             last_frame = frame_bgr
             yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
 
     finally:
         cap.release()
         hands.close()
 
+def set_selected_ring(request):
+    global selected_ring
+    if request.method == 'POST':
+        selected_ring = request.POST['selected_ring']
+    return JsonResponse({'status': 'success', 'message': 'Image changed successfully'})
 def capture_frame_and_send_email(request):
     global last_frame  # Ensure we use the global last_frame variable
     if request.method == 'POST':
@@ -120,7 +137,7 @@ def video_feed(request):
 
 
 def index(request):
-    return render(request, 'handestimation/index.html')
+    return render(request, 'handestimation/index.html',context)
 
 
 

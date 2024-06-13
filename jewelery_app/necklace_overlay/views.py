@@ -4,14 +4,25 @@ from django.shortcuts import render
 from django.core.mail import EmailMessage
 from django.conf import settings
 import logging
+import os
+BASE_DIR = settings.BASE_DIR
 
 last_frame = None
+
+necklaces_array = []
+for a,b,c in os.walk(os.path.join(BASE_DIR,"necklace_overlay","static","necklaces",)):
+    necklaces_array = c
+
+context = {
+    "data":necklaces_array,
+}
+selected_necklace = 'necklace4.png'
 
 # Load the pre-trained face detector
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
 
 # Load the image of the necklace
-necklace = cv2.imread("D:\\Internship\\necklace6.png", cv2.IMREAD_UNCHANGED)
+#necklace = cv2.imread("D:\\Internship\\necklace6.png", cv2.IMREAD_UNCHANGED)
 
 def necklace_overlay_video_feed():
     global last_frame
@@ -29,6 +40,8 @@ def necklace_overlay_video_feed():
 
         if not ret:
             break
+
+        necklace = cv2.imread(os.path.join(BASE_DIR,"necklace_overlay","static","necklaces",selected_necklace),cv2.IMREAD_UNCHANGED)
 
         # Convert the frame to grayscale
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -85,6 +98,12 @@ def necklace_overlay_video_feed():
 
     cap.release()
 
+def set_selected_necklace(request):
+    global selected_necklace
+    if request.method == 'POST':
+        selected_necklace = request.POST['selected_necklace']
+    return JsonResponse({'status': 'success', 'message': 'Image changed successfully'})
+
 def capture_frame_and_send_email(request):
     global last_frame  # Ensure we use the global last_frame variable
     if request.method == 'POST':
@@ -117,4 +136,4 @@ def video_feed(request):
     return StreamingHttpResponse(necklace_overlay_video_feed(), content_type='multipart/x-mixed-replace; boundary=frame')
 
 def index(request):
-    return render(request, 'necklace_overlay/index.html')
+    return render(request, 'necklace_overlay/index.html',context)

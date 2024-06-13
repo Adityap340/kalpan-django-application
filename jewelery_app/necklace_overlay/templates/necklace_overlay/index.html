@@ -6,29 +6,38 @@
     <title>Jewelry App</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <script src = "https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="logo">
-            <img src="{% static 'images/logo.png' %}" alt="Kalpan Infonomics">
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <img src="{% static 'images/logo.png' %}" alt="Kalpan Infonomics">
+            </div>
+            <ul class="nav">
+                <li><a href="#">Home</a></li>
+                <li><a href="{% url 'handestimation:index' %}">Rings</a></li>
+                <li><a href="{% url 'necklace_overlay:index' %}">Necklaces</a></li>
+                <li><a href="{% url 'earring_overlay:index' %}">Earrings</a></li>
+            </ul>
         </div>
-        <ul class="nav">
-            <li><a href="#">Home</a></li>
-            <li><a href="{% url 'handestimation:index' %}">Rings</a></li>
-            <li><a href="{% url 'necklace_overlay:index' %}">Necklaces</a></li>
-            <li><a href="{% url 'earring_overlay:index' %}">Earrings</a></li>
-        </ul>
-    </div>
-    <div class="content">
-        <div class="video-container">
-            <img src="{% url 'necklace_overlay:video_feed' %}" width="720" height="560">
+        <div class="content">
+            <div class="video-container">
+                <img src="{% url 'necklace_overlay:video_feed' %}" width="720" height="560">
+            </div>
+            <button class="snap-button" onclick="captureFrame()">Snap</button>
         </div>
-        <button class="snap-button" onclick="captureFrame()">Snap</button>
+        <div class="ring-options">
+            {% for necklace in data %}
+            <div class="ring-item">
+                <img src="{% static 'necklaces/' %}{{ necklace }}" onclick="select_necklace(event, '{{ necklace }}')" alt="{{ necklace }}">
+            </div>
+            {% endfor %}
+        </div>
     </div>
 
     <script>
-       function captureFrame() {
+        function captureFrame() {
             const email = prompt("Please enter your email address:");
             if (!email) {
                 alert("Email address is required.");
@@ -39,6 +48,26 @@
                 url: '{% url 'necklace_overlay:capture_frame_and_send_email' %}',
                 data: {
                     'email': email,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(error) {
+                    console.error("Error:", error);
+                    alert("An error occurred while capturing the frame.");
+                }
+            });
+        }
+
+        function select_necklace(event, necklace) {
+            console.log(necklace);
+            var selected_necklace = necklace;
+            $.ajax({
+                type: 'POST',
+                url: '{% url 'necklace_overlay:set_selected_necklace' %}',
+                data: {
+                    'selected_necklace': selected_necklace,
                     'csrfmiddlewaretoken': '{{ csrf_token }}'
                 },
                 success: function(response) {

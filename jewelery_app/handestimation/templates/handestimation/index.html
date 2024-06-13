@@ -26,6 +26,13 @@
         </div>
         <button class="snap-button" onclick="captureFrame()">Snap</button>
     </div>
+    <div class="ring-options">
+        {% for ring in data %}
+        <div class="ring-item">
+            <img src="{% static 'rings/' %}{{ ring }}" onclick="select_ring(event, '{{ ring }}')" alt="{{ ring }}">
+        </div>
+        {% endfor %}
+    </div>
 
     <script>
         function captureFrame() {
@@ -39,6 +46,26 @@
                 url: '{% url 'handestimation:capture_frame_and_send_email' %}',
                 data: {
                     'email': email,
+                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                },
+                success: function(response) {
+                    alert(response.message);
+                },
+                error: function(error) {
+                    console.error("Error:", error);
+                    alert("An error occurred while capturing the frame.");
+                }
+            });
+        }
+
+        function select_ring(event, ring) {
+            console.log(ring);
+            var selected_ring = ring;
+            $.ajax({
+                type: 'POST',
+                url: '{% url 'handestimation:set_selected_ring' %}',
+                data: {
+                    'selected_ring': selected_ring,
                     'csrfmiddlewaretoken': '{{ csrf_token }}'
                 },
                 success: function(response) {
